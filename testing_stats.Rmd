@@ -1,0 +1,237 @@
+---
+title: "Standardized Test Performance of U.S. Schools"
+author: "Shankar Prabhu"
+date: "July 2020"
+output: pdf_document
+---
+
+In this section, we will take a look at how the testing statistics in reading & math of U.S schools have changed over the past 30 years. 
+
+```{r}
+data = read.csv(
+  "C:/Users/shank/Documents/Data_Science_Projects/education/states_all_extended.csv", 
+  header = TRUE, sep = ",")
+```
+
+```{r}
+STATE = data$STATE
+YEAR = data$YEAR
+ENROLL = data$ENROLL
+test_nums = data[grep('..._._._MATHEMATICS$|..._.._._MATHEMATICS$|..._._._READING$|..._.._._READING$', names(data))]
+
+test_scores = cbind(STATE, YEAR, ENROLL, test_nums)
+
+summary(test_scores)
+```
+
+Based on the summary, it still looks like we will have a lot of missing data. Similar to the reasoning used in the enrollment_demos exploration file, we will have to go ahead and set these missing values to 0. Unfortunately, this means losing out on some interesting trend information.
+
+First, let's take a look at how overall reading and math scores have changed over time. To do this, we can create a dataset which shows the average math and reading scores in the state over time. This could be prone to some adjustment errors if enrollment demographics shift over grade levels, but earlier analysis revealed this is not the case so we should be good to go. 
+
+```{r}
+test_scores[is.na(test_scores)] = 0
+test_scores$READING <- rowSums(data[grep('..._._._READING$|..._.._._READING', names(data))])
+test_scores$MATHEMATICS <- rowSums(data[grep('..._._._MATHEMATICS$|..._.._._MATHEMATICS$', names(data))])
+
+total_scores_by_year = setNames(aggregate(cbind(test_scores$MATHEMATICS, 
+                                        test_scores$READING,
+                                        test_scores$ENROLL)
+                                 , by=list(YEAR=test_scores$YEAR), 
+                               FUN = sum, na.rm = TRUE), c("YEAR", "Avg. Math Score", 
+                                                           "Avg. Reading Scores",
+                                                           "Total Enrollment"))
+summary(total_scores_by_year)
+```
+
+
+Looks like there is a lot of missing data in the scores section, and the only year for which their is really good data is 2013. All other years either have no testing data or limited data to where it might not be usable. 
+
+So, unfortunately, we will not be able to look at test scores over time, we should confine our analysis to 2013 to see what other information we are able to gleam. 
+
+```{r}
+data = read.csv(
+  "C:/Users/shank/Documents/Data_Science_Projects/education/states_all_extended.csv", 
+  header = TRUE, sep = ",")
+
+year_2013 = data[data$YEAR == 2013,]
+year_2013[is.na(year_2013)] = 0
+
+# we should have columns for enrollment by race/gender and then columns for total reading scores and total mathematics scores
+AM_4 = year_2013$G04_AM_F + year_2013$G04_AM_M
+AS_4 = year_2013$G04_AS_F + year_2013$G04_AS_M
+HI_4 = year_2013$G04_HI_F + year_2013$G04_HI_M
+BL_4 = year_2013$G04_BL_F + year_2013$G04_BL_M
+WH_4 = year_2013$G04_WH_F + year_2013$G04_WH_M
+HP_4 = year_2013$G04_HP_F + year_2013$G04_HP_M
+TR_4 = year_2013$G04_TR_F + year_2013$G04_TR_M
+FEM_4 = year_2013$G04_AM_F + year_2013$G04_AS_F + 
+  year_2013$G04_HI_F + year_2013$G04_BL_F + 
+  year_2013$G04_WH_F + year_2013$G04_HP_F + 
+  year_2013$G04_TR_F
+MAL_4 = year_2013$G04_AM_M + year_2013$G04_AS_M + 
+  year_2013$G04_HI_M + year_2013$G04_BL_M + 
+  year_2013$G04_WH_M + year_2013$G04_HP_M + 
+  year_2013$G04_TR_M
+
+AM_8 = year_2013$G08_AM_F + year_2013$G08_AM_M
+AS_8 = year_2013$G08_AS_F + year_2013$G08_AS_M
+HI_8 = year_2013$G08_HI_F + year_2013$G08_HI_M
+BL_8 = year_2013$G08_BL_F + year_2013$G08_BL_M
+WH_8 = year_2013$G08_WH_F + year_2013$G08_WH_M
+HP_8 = year_2013$G08_HP_F + year_2013$G08_HP_M
+TR_8 = year_2013$G08_TR_F + year_2013$G08_TR_M
+FEM_8 = year_2013$G08_AM_F + year_2013$G08_AS_F + 
+  year_2013$G08_HI_F + year_2013$G08_BL_F + 
+  year_2013$G08_WH_F + year_2013$G08_HP_F + 
+  year_2013$G08_TR_F
+MAL_8 = year_2013$G08_AM_M + year_2013$G08_AS_M + 
+  year_2013$G08_HI_M + year_2013$G08_BL_M +
+  year_2013$G08_WH_M + year_2013$G08_HP_M + 
+  year_2013$G08_TR_M
+
+testing_2013 = year_2013[grep('..._._._MATHEMATICS$|..._.._._MATHEMATICS$|..._._._READING$|..._.._._READING$', names(year_2013))]
+
+
+testing_2013 = cbind(year_2013$YEAR, year_2013$STATE, AM_4,
+AS_4, HI_4, BL_4, WH_4, HP_4, TR_4, FEM_4, MAL_4, AM_8 , AS_8,
+HI_8, BL_8, WH_8, HP_8, TR_8, FEM_8, MAL_8, testing_2013)
+
+
+
+```
+
+
+Let's ignore states for now, and just go ahead and sum the data into one row.
+
+```{r}
+test_2013_row = testing_2013[,-c(1:2)]
+test_2013_row = colSums(test_2013_row)
+AM = test_2013_row[1] + test_2013_row[10]
+AS = test_2013_row[2] + test_2013_row[11]
+HI = test_2013_row[3] + test_2013_row[12]
+BL = test_2013_row[4] + test_2013_row[13]
+WH = test_2013_row[5] + test_2013_row[14]
+HP = test_2013_row[6] + test_2013_row[15]
+TR = test_2013_row[7] + test_2013_row[16]
+FEM = test_2013_row[8] + test_2013_row[17]
+MAL = test_2013_row[9] + test_2013_row[18]
+fem_reading = test_2013_row[23] + test_2013_row[43]
+mal_reading = test_2013_row[21] + test_2013_row[41]
+fem_math = test_2013_row[24] + test_2013_row[44]
+mal_math = test_2013_row[22] + test_2013_row[42]
+
+genders = rep(c("Female", "Male"), 2)
+tests = c(rep("Reading", 2), rep("Math", 2))
+scores = c(fem_reading/FEM, mal_reading/MAL, fem_math/FEM, mal_math/MAL)
+
+scores_by_gender = data.frame(genders, tests, scores)
+rownames(scores_by_gender) = c()
+
+library(ggplot2)
+ggplot(scores_by_gender, aes(fill=genders, y=scores, x=tests)) + 
+    geom_bar(position="dodge", stat="identity")
+
+```
+Looks like females, on average, perform better on both math and reading, with the reading difference being greater than the math difference. I wonder if these performance gaps between the genders differ from grade 4 to grade 8.
+
+```{r}
+fem_reading_04 = test_2013_row[23] 
+fem_reading_08 = test_2013_row[43]
+mal_reading_04 = test_2013_row[21] 
+mal_reading_08 = test_2013_row[41]
+fem_math_04 = test_2013_row[24] 
+fem_math_08 = test_2013_row[44]
+mal_math_04 = test_2013_row[22] 
+mal_math_08 = test_2013_row[42]
+
+fem_04_pop = test_2013_row[8]
+fem_08_pop = test_2013_row[17]
+mal_04_pop = test_2013_row[9]
+mal_08_pop = test_2013_row[18]
+
+genders = rep(c("Female 4th", "Male 4th", "Female 8th", "Male 8th"), 2)
+tests = c(rep("Reading", 4), rep("Math", 4))
+scores = c(fem_reading_04/fem_04_pop,
+           mal_reading_04/mal_04_pop,
+           fem_reading_08/fem_08_pop,
+           mal_reading_08/mal_08_pop,
+           fem_math_04/fem_04_pop,
+           mal_math_04/mal_04_pop,
+           fem_math_08/fem_08_pop,
+           mal_math_08/mal_08_pop)
+
+scores_by_gender = data.frame(genders, tests, scores)
+rownames(scores_by_gender) = c()
+
+library(ggplot2)
+ggplot(scores_by_gender, aes(fill=genders, y=scores, x=tests)) + 
+    geom_bar(position="dodge", stat="identity")
+
+```
+
+Looks like the gap between females and males increases by 26% for reading and by 22% for math between 4th and 8th grade. I wonder what educational factors are key drivers in both the initial creation and widening of this gap over time, and what policies or educational strategies can be deployed to improve upon discrepancies.
+
+Now that we have got a good understanding of the statistics around standardized test performance by gender, let us examine the differences by race.
+
+```{r}
+AM = test_2013_row[1] + test_2013_row[10]
+AS = test_2013_row[2] + test_2013_row[11]
+HI = test_2013_row[3] + test_2013_row[12]
+BL = test_2013_row[4] + test_2013_row[13]
+WH = test_2013_row[5] + test_2013_row[14]
+HP = test_2013_row[6] + test_2013_row[15]
+TR = test_2013_row[7] + test_2013_row[16]
+
+AM_reading = test_2013_row[33] + test_2013_row[53]
+AS_reading = test_2013_row[31] + test_2013_row[51]
+HI_reading = test_2013_row[29] + test_2013_row[49]
+BL_reading = test_2013_row[27] + test_2013_row[47]
+WH_reading = test_2013_row[25] + test_2013_row[45]
+HP_reading = test_2013_row[35] + test_2013_row[55]
+TR_reading = test_2013_row[37] + test_2013_row[57]
+
+AM_math = test_2013_row[34] + test_2013_row[54]
+AS_math = test_2013_row[32] + test_2013_row[52]
+HI_math = test_2013_row[30] + test_2013_row[50]
+BL_math = test_2013_row[28] + test_2013_row[48]
+WH_math = test_2013_row[26] + test_2013_row[46]
+HP_math = test_2013_row[36] + test_2013_row[56]
+TR_math = test_2013_row[38] + test_2013_row[58]
+
+
+races = rep(c("American Indian", "Asian", "Hispanic", 
+              "African American", "White", "Hawaiian Native", "Multiracial"), 2)
+tests = c(rep("Reading", 7), rep("Math", 7))
+scores = c(AM_reading/AM, AS_reading/AS, HI_reading/HI,
+           BL_reading/BL, WH_reading/WH, HP_reading/HP,
+           TR_reading/TR, AM_math/AM, AS_math/AS, HI_math/HI,
+           BL_math/BL, WH_math/WH, HP_math/HP, TR_math/TR)
+
+scores_by_race = data.frame(races, tests, scores)
+rownames(scores_by_race) = c()
+
+library(ggplot2)
+ggplot(scores_by_race, aes(fill=races, y=scores, x=tests)) + 
+    geom_bar(position="dodge", stat="identity")
+
+```
+
+
+The bar graphs show clear distinctions between different racial categories and their performances on reading and math standarized tests. However, I would put down most of the discrepancy to data quality issues, since for example, multiracial had the most missing enrollment data (maybe inflating their testing numbers slightly), while categories like "White", "Hispanic", and "African American" had missing test score data but nearly all of their enrollment data filled in, which could possibly deflate their testing numbers.
+
+Overall, I am concerned about the quality of this data even though it comes from reputable sources like the U.S. census and standardized testing boards. I wonder if some of the data collection issues are in themselves caused by racial or economic factors that make it harder/easier to collect data. It seems a worthy investment to focus on education data collection so that policymakers have more accurate information so they can craft better legislation and improve U.S. schools.
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+

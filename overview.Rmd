@@ -1,0 +1,33 @@
+---
+title: "Exploratory Analysis of U.S. Education Dataset"
+author: 'Shankar Prabhu'
+date: "July 2020"
+output: pdf_document
+---
+
+
+The dataset we will use is linked at: https://www.kaggle.com/noriuk/us-education-datasets-unification-project?select=states_all.csv. Let's start by reading in the dataset and generating a few quick summaries of the columns. 
+
+```{r}
+data = read.csv(
+  "C:/Users/shank/Documents/Data_Science_Projects/education/states_all_extended.csv"
+                , header = TRUE, sep = ",")
+nrow(data)
+ncol(data)
+names(data)
+min(data$YEAR)
+max(data$YEA)
+unique(data$STATE)
+```
+
+Overall, looks like we have education data from 1986 to 2019 (~33 years). The data is organized by (state, year) pairs, and we have 53 unique values for state (Department of Defense, D.C., etc.). 
+
+There are three sections for the data: funding/spending, enrollment demographics, testing demographics. 
+
+Funding/Spending includes columns like "FEDERAL_REVENUE" or "INSTRUCTION_EXPENDITURE", and will be helpful in understanding education finances over time.
+
+Enrollment demographics are organized into columns with three parts to their name (ex: "GO2_AS_F"). The first part refers to the grade level (ex. GO2 is grade 2), the second part refers to the race (ex: AS means Asian, there are 7 different racial categories), and the third part is gender (ex. F for female). If one of these parts is "A" it refers to all students, so "A_A_A" means all students enrolled in that state for some year. These columns will show how demograhpics have changed in U.S. education in the past 30 years.
+
+Testing demographics use a similar categorization system as enrollment demograhpics, but it also adds a fourth part to refer to the average "READING" or "MATHEMATICS" test score for that particular group (on the NAEP exam). These columns will help us understanding student performance on standardized tests through time. 
+
+**As a result, we will break down the analysis into these three sections of the data, and then bring them together for some final conclusions.**
